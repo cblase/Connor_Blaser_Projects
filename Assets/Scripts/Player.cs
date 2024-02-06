@@ -12,8 +12,10 @@ public class Player : MonoBehaviour
     public Vector3[] SmoothPath, aPath;
     [SerializeField]
     private float Speed = 10.0f;
-    public float rotationSpeed = 0.75f;
+    [SerializeField]
+    private float rotationSpeed = 0.75f;
 
+    //apply offset to path for player to follow
     void extractPath(NavGridPathNode[] path)
     {
         Vector3 offSet = new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
@@ -57,12 +59,14 @@ public class Player : MonoBehaviour
         // Traverse
         if(CurrentPathIndex < SmoothPath.Length)
         {
+            //show smoothed path
             for (int i = 0; i < SmoothPath.Length - 1; i++)
             {
                 Debug.DrawLine(SmoothPath[i], SmoothPath[i + 1], Color.blue);
             }
+
             Vector3 currentNode = SmoothPath[CurrentPathIndex];
-            var vectorToDestination = currentNode - transform.position;// + new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
+            var vectorToDestination = currentNode - transform.position;
             vectorToDestination.y = 0f;
             var maxDistance = Speed * Time.deltaTime;
             var moveDistance = Mathf.Min(vectorToDestination.magnitude, maxDistance);
@@ -70,46 +74,12 @@ public class Player : MonoBehaviour
             moveVector.y = 0f; // Ignore Y
             Quaternion rotgoal = Quaternion.LookRotation(vectorToDestination.normalized);
             transform.position += moveVector;
-            //Vector3 targetPos = currentNode.Position + new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
-            //transform.position = Vector3.MoveTowards(transform.position, targetPos, Speed * Time.deltaTime);
             transform.rotation = Quaternion.Slerp(transform.rotation, rotgoal, rotationSpeed);
-            //transform.forward += vectorToDestination * maxDistance;
-
-            //Vector3 targetPos = currentNode.Position + new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
-            //transform.position = Vector3.MoveTowards(transform.position, targetPos, Speed * Time.deltaTime);
-            //transform.forward = vectorToDestination;
-            //Debug.Log("magnitude: " + vectorToDestination.magnitude);
+            
             if (vectorToDestination.magnitude < 0.6f)
             {
-                //Debug.Log("moving to next path index! " + CurrentPathIndex);
                 CurrentPathIndex++;
             }
         }
-        //else if (CurrentPath != null && CurrentPathIndex < CurrentPath.Length)
-        //{
-        //    var currentNode = CurrentPath[CurrentPathIndex];
-        //    var vectorToDestination = currentNode.Position - transform.position + new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
-        //    vectorToDestination.y = 0f;
-        //    var maxDistance = Speed * Time.deltaTime;
-        //    var moveDistance = Mathf.Min(vectorToDestination.magnitude, maxDistance);
-        //    var moveVector = vectorToDestination.normalized * moveDistance;
-        //    moveVector.y = 0f; // Ignore Y
-        //    Quaternion rotgoal = Quaternion.LookRotation(vectorToDestination.normalized);
-        //    transform.position += moveVector;
-        //    //Vector3 targetPos = currentNode.Position + new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
-        //    //transform.position = Vector3.MoveTowards(transform.position, targetPos, Speed * Time.deltaTime);
-        //    transform.rotation = Quaternion.Slerp(transform.rotation, rotgoal, rotationSpeed);
-        //    //transform.forward += vectorToDestination * maxDistance;
-
-        //    //Vector3 targetPos = currentNode.Position + new Vector3(Grid.CellSize / 2, 0, Grid.CellSize / 2);
-        //    //transform.position = Vector3.MoveTowards(transform.position, targetPos, Speed * Time.deltaTime);
-        //    //transform.forward = vectorToDestination;
-
-        //    if (vectorToDestination.magnitude < 0.5f)
-        //    {
-        //        //Debug.Log("moving to next path index!");
-        //        CurrentPathIndex++;
-        //    }
-        //}
     }
 }

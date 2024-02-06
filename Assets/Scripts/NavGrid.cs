@@ -8,12 +8,16 @@ public class NavGrid : MonoBehaviour
     public float CellSize { get; private set; }
     public int segmentCount = 2;
     public NavGridPathNode[,] Grid;
+
     [SerializeField]
     private GameObject wallCube;
     [SerializeField]
     private GameObject Player;
+    //A* path costs
     private const int diagCost = 14;
     private const int straightCost = 10;
+
+    //Initialize a new grid
     public void GenerateNavGrid(int w, int h, float size)
     {
         if (Grid != null) DestroyAllWalls();
@@ -22,9 +26,10 @@ public class NavGrid : MonoBehaviour
         Height = (h >= 2 && h <= 100) ? h : 50;
         CellSize = (size >= 1 && size <= 10) ? size : 1;
 
+        //adjust gridplane to reflect the new grid size
         gameObject.transform.localScale = new Vector3((w / 10f) * CellSize, 1, (h / 10f) * CellSize);
         gameObject.transform.localPosition = new Vector3((w / 2f) * CellSize, 0, (h / 2f) * CellSize);
-
+        //set player in middle of new grid
         Player.transform.localPosition = new Vector3((w / 2f) * CellSize, 1, (h / 2f) * CellSize);
 
 
@@ -42,7 +47,6 @@ public class NavGrid : MonoBehaviour
     //returns an array of Grid nodes to the player
     public NavGridPathNode[] GetPath(Vector3 origin, Vector3 destination)
     {
-        //Debug.Log("begin the path search!");
         int startX, startY, desX, desY;
         List<NavGridPathNode> SearchList;
         List<NavGridPathNode> DoneList;
@@ -56,6 +60,7 @@ public class NavGrid : MonoBehaviour
 
         NavGridPathNode startNode = Grid[startX, startY];
         NavGridPathNode endNode = Grid[desX, desY];
+
         //Initialize Grid for creating a path
         for (int x = 0; x < Grid.GetLength(0); x++)
         {
@@ -77,19 +82,18 @@ public class NavGrid : MonoBehaviour
             NavGridPathNode current = FindLowestFCostNode(SearchList);
             if (current == endNode)//found the end point
             {
-                //Debug.Log("found shortest path!");
                 NavGridPathNode[] A_Path = CreateFinalPath(endNode).ToArray();
                 DrawDebugLines(A_Path, Color.black);
-                Vector3[] temp = CreateSmoothPath(A_Path);
-                Player.GetComponent<Player>().SmoothPath = temp;
-                Debug.Log("path length: " + A_Path.Length);
+
+                //provide player with smooth path
+                Player.GetComponent<Player>().SmoothPath = CreateSmoothPath(A_Path);
+
                 return A_Path;
-                //return CreateFinalPath(endNode).ToArray();
             }
             SearchList.Remove(current);
             DoneList.Add(current);
 
-            //searchNeighbors
+            //search neighbors
             foreach (NavGridPathNode node in FindNeighbors(current))
             {
                 if (DoneList.Contains(node)) continue;//skip used nodes
@@ -114,89 +118,93 @@ public class NavGrid : MonoBehaviour
                 }
             }
         }
-        //no path found
         Debug.Log("no path found!");
         return null;
     }
-
+    //traverses through all the connections to collect the path created with A*
     private List<NavGridPathNode> CreateFinalPath(NavGridPathNode end)
     {
         List<NavGridPathNode> Path = new List<NavGridPathNode>();
         Path.Add(end);
-        //Debug.LogFormat("last node: {0}", end.Position);
         NavGridPathNode curr = end;
         while (curr.connection != null)
         {
             Path.Add(curr.connection);
-            //Debug.LogFormat("next node: {0}", curr.connection.Position);
             curr = curr.connection;
         }
         Path.Reverse();
         return Path;
     }
-
+    //Create smooth curves along the generated A* path
     private Vector3[] CreateSmoothPath(NavGridPathNode[] A_Path)
     {
         List<Vector3> points = new List<Vector3>();
+        Vector3 offSet = new Vector3(CellSize / 2, 0, CellSize / 2);
         //Handles paths too short to be smoothed
-        if(A_Path.Length < 3)
+        if (A_Path.Length < 3)//3
         {
-            foreach(NavGridPathNode node in A_Path)
+            foreach (NavGridPathNode node in A_Path)
             {
-                points.Add(node.Position);
+                points.Add(node.Position + offSet);
             }
             return points.ToArray();
         }
 
-        Vector3 offSet = new Vector3(CellSize / 2, 0, CellSize / 2);
-        
-        int nodeIndex = 0; //j * 3;
-        while (nodeIndex < A_Path.Length - 1)//for (int j = 0; j < curveCount; j++)
+        int nodeIndex = 0;
+        Vector3 A, B, C, D;
+
+        while (nodeIndex < A_Path.Length - 1)
         {
-            //Debug.LogFormat("nodeIndex: {0}, Path Length: {1}, Cubic Time: {2}", nodeIndex, A_Path.Length,(nodeIndex + 3 == A_Path.Length - 1));
+            bool Cubic = false;
             for (int i = 1; i <= segmentCount; i++)
             {
                 float t = i / (float)segmentCount;
                 Vector3 node;
-
-                if (nodeIndex + 3 == A_Path.Length - 1)
+                //Check for enough nodes for a Cubic curve
+                if (nodeIndex + 3 < A_Path.Length)
                 {
-                    node = CalculateCubicBezierPoint(t, A_Path[nodeIndex].Position + offSet, A_Path[nodeIndex + 1].Position + offSet, A_Path[nodeIndex + 2].Position + offSet, A_Path[nodeIndex + 3].Position + offSet);
+                    A = A_Path[nodeIndex].Position + offSet;
+                    B = A_Path[nodeIndex + 1].Position + offSet;
+                    C = A_Path[nodeIndex + 2].Position + offSet;
+                    D = A_Path[nodeIndex + 3].Position + offSet;
+
+                    //check for straight lines to skip
+                    if (checkForStraightLines(A, B, C) && checkForStraightLines(B, C, D))
+                    {
+                        node = A;
+                        points.Add(node);
+                        nodeIndex--;
+                        break;
+                    }
+                    node = CalculateCubicBezierPoint(t, A, B, C, D);
+                    points.Add(node);
+                    Cubic = true;
+                }
+                //check for enough nodes for a Quadratic curve
+                else if (nodeIndex + 2 == A_Path.Length - 1)
+                {
+                    A = A_Path[nodeIndex].Position + offSet;
+                    B = A_Path[nodeIndex + 1].Position + offSet;
+                    C = A_Path[nodeIndex + 2].Position + offSet;
+                    node = CalculateQuadraticBezierPoint(t, A, B, C);
                     points.Add(node);
                 }
-                else if (checkForStraightLines(A_Path[nodeIndex].Position + offSet, A_Path[nodeIndex+1].Position + offSet, A_Path[nodeIndex + 2].Position + offSet))
+                else//only two nodes left
                 {
-                    node = A_Path[nodeIndex].Position + offSet;
-                    points.Add(node);
+                    points.Add(A_Path[nodeIndex].Position + offSet);
+                    points.Add(A_Path[nodeIndex + 1].Position + offSet);
                     nodeIndex--;
                     break;
                 }
-                else
-                {
-                    node = CalculateQuadraticBezierPoint(t, A_Path[nodeIndex].Position + offSet, A_Path[nodeIndex + 1].Position + offSet, A_Path[nodeIndex + 2].Position + offSet);
-                    points.Add(node);
-                }
             }
-            if (nodeIndex + 3 == A_Path.Length - 1) nodeIndex += 3;
+            //adjust the end of this current curve
+            if (Cubic) nodeIndex += 3;
             else nodeIndex += 2;
-            //nodeIndex++;
+            //nodeIndex += 2;
         }
         return points.ToArray();
     }
-
-    bool checkForStraightLines(Vector3 a, Vector3 b, Vector3 c)
-    {
-        if (((a.z - b.z) * (b.x - c.x)) == ((b.z - c.z) * (a.x - b.x))) return true;
-        return false;
-        ////straight line up
-        //if ((a.x - b.x) == 0 && (b.x - c.x) == 0) return true;
-        ////stright line horizontal
-        //if ((a.z - b.z) == 0 && (b.z - c.z) == 0) return true;
-        ////Diagonal straight line
-        //if (a.x - b.x != 0 && a.z - b.z != 0 && b.x - c.x != 0 && b.z - c.z != 0) return true;
-
-        //return false;
-    }
+    //Create a Cubic Curve (4 points)
     Vector3 CalculateCubicBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
     {
         float u = 1 - t;
@@ -212,7 +220,7 @@ public class NavGrid : MonoBehaviour
 
         return position;
     }
-
+    //Create a Quadratic Curve (3 Points)
     Vector3 CalculateQuadraticBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
     {
         Vector3 position;
@@ -222,12 +230,15 @@ public class NavGrid : MonoBehaviour
     }
 
     //Helper Functions---------------------------------------------------------
-
+    bool checkForStraightLines(Vector3 a, Vector3 b, Vector3 c)
+    {
+        if (((a.z - b.z) * (b.x - c.x)) == ((b.z - c.z) * (a.x - b.x))) return true;
+        return false;
+    }
     public Vector3 ToWorldSpace(int x, int y)
     {
         return new Vector3(x, 0, y) * CellSize;
     }
-
     public void ToGridSpace(Vector3 vector3, out int x, out int y)
     {
         x = Mathf.FloorToInt(vector3.x / CellSize);
@@ -295,11 +306,11 @@ public class NavGrid : MonoBehaviour
 
         return diagCost * Mathf.Min(distanceX, distanceY) + straightCost * remainDist;
     }
-
+    //display the generated path
     private void DrawDebugLines(NavGridPathNode[] path, Color c)
     {
         Vector3 cellSizeOffset = new Vector3(CellSize / 2, 0, CellSize / 2);
-        for(int i = 0; i < path.Length - 1; i++)
+        for (int i = 0; i < path.Length - 1; i++)
         {
             Debug.DrawLine(path[i].Position + cellSizeOffset, path[i + 1].Position + cellSizeOffset, c, 10f);
         }
@@ -354,3 +365,54 @@ public class NavGrid : MonoBehaviour
         }
     }
 }
+
+
+
+
+
+
+
+
+//spare code (quadratic smooth paths
+//if (nodeIndex + 3 == A_Path.Length - 1)
+//{
+//    A = A_Path[nodeIndex].Position + offSet;
+//    B = A_Path[nodeIndex + 1].Position + offSet;
+//    C = A_Path[nodeIndex + 2].Position + offSet;
+//    D = A_Path[nodeIndex + 3].Position + offSet;
+
+//    //check for straight lines to skip
+//    //if (checkForStraightLines(A, B, C) && checkForStraightLines(B, C, D))
+//    //{
+//    //    node = A;
+//    //    points.Add(node);
+//    //    nodeIndex++;
+//    //    break;
+//    //}
+//    node = CalculateCubicBezierPoint(t, A, B, C, D);
+//    points.Add(node);
+//    nodeIndex++;
+//}
+////check for enough nodes for a Quadratic curve
+//else if (nodeIndex + 2 < A_Path.Length)
+//{
+//    A = A_Path[nodeIndex].Position + offSet;
+//    B = A_Path[nodeIndex + 1].Position + offSet;
+//    C = A_Path[nodeIndex + 2].Position + offSet;
+//    if (checkForStraightLines(A, B, C))
+//    {
+//        node = A;
+//        points.Add(node);
+//        nodeIndex--;
+//        break;
+//    }
+//    node = CalculateQuadraticBezierPoint(t, A, B, C);
+//    points.Add(node);
+//}
+//else//only two nodes left
+//{
+//    points.Add(A_Path[nodeIndex].Position + offSet);
+//    points.Add(A_Path[nodeIndex + 1].Position + offSet);
+//    nodeIndex--;
+//    break;
+//}

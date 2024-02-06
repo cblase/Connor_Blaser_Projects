@@ -2,16 +2,21 @@ using UnityEngine;
 
 public class NavGridPathNode
 {
+    //world space location
     public Vector3 Position;
+    //Grid Coordinate position
     public int X, Z;
+    //scaling of cell
     public float CellSize;
+    //connection link to previous node
     public NavGridPathNode connection;
+    //store wall object
     public GameObject Wall;
     public int gCost { get; private set; }
     public int hCost { get; private set; }
-
     public int fCost => gCost + hCost;
     
+
     public NavGridPathNode(int x, int y, float size)
     {
         X = x;
