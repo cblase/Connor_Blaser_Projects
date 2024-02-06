@@ -1,18 +1,12 @@
 # Unity A* Pathfinding With Bezier Curve Path Smoothing
+This project is aimed at creating a grid generator that mimics a basic form of a NavMesh. the 2D grid can be set to a width and height, and scaled to make each cell a range of sizes to best suite a given map. It comes with an A* based path finding system to find the shortest path around obstacles populated on the grid. Finally, a path smoothing function is applied using Bezier curves to smooth the path the player takes along the provided A* path. This is to mitigate much of the robotic movement of following a grid-based path. 
 
-## Submission Guidelines
-When you have completed the project, please follow these guidelines for submission:
+## Running and Testing the project
+1. Open up the project and enter play mode
+2. The default grid is a 50x50 with cell size of 1. I feel cell size 1 is a tad small for some testing cases so I enter size 3 to make the cells larger. This will also make the walls scale up in size to reflect the size of each cell.
+3. Controls will be found in the top left of the screen.
+4. Once your grid size is generated, create any number of walls (black cubes) and test the pathfinding algroithm.
+5. black debug line is the main A* path initially generated. the Blue line is the Bezier Smoothed path the player follows
 
-1. Commit and push your code to your GitHub repository.
-
-2. Update this README with any additional instructions, notes, or explanations regarding your implementation, if necessary.
-
-3. Provide clear instructions on how to run and test your project.
-
-4. Share the repository URL with the hiring team or interviewer.
-
-## Additional Information
-
-Feel free to be creative in how you approach this project. Your solution will be evaluated based on code quality, efficiency, and how well it meets the specified requirements.
-
-Good luck, and we look forward to seeing your Unity pathfinding project! If you have any questions or need clarifications, please reach out to us.
+## Final Notes
+This project is at about 90-95% where I want it. The path smoothing handles almost all path scenarios, however certain complex paths with multiple back to back turns sometimes showcases this path smoothing function's limitations. Researching more dynamic ways to handle these specific scenarios. I have some other optimizations I'd like to make in the future as well which I'm happy to share while reviewing the project.
