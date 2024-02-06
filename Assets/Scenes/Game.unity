@@ -2231,7 +2231,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Rows/Columns 2-100
+  m_text: 'Rows/Columns 10-100
 
     CellSize 1-10
 

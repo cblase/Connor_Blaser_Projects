@@ -41,7 +41,6 @@ public class MenuController : MonoBehaviour
         {
             Width = row;
         }
-        Debug.Log("Row Data: " + inputRow.text);
     }
 
     public void ReadColumnData()
@@ -51,7 +50,6 @@ public class MenuController : MonoBehaviour
         {
             Height = col;
         }
-        Debug.Log("Collumn Data: " + inputCol.text);
     }
 
     public void ReadCellSizeData()

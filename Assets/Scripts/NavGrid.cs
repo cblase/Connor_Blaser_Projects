@@ -6,7 +6,7 @@ public class NavGrid : MonoBehaviour
     public int Width { get; private set; }
     public int Height { get; private set; }
     public float CellSize { get; private set; }
-    public int segmentCount = 2;
+    public int segmentCount = 10;
     public NavGridPathNode[,] Grid;
 
     [SerializeField]
@@ -22,8 +22,8 @@ public class NavGrid : MonoBehaviour
     {
         if (Grid != null) DestroyAllWalls();
 
-        Width = (w >= 2 && w <= 100) ? w : 50;
-        Height = (h >= 2 && h <= 100) ? h : 50;
+        Width = (w >= 10 && w <= 100) ? w : 50;
+        Height = (h >= 10 && h <= 100) ? h : 50;
         CellSize = (size >= 1 && size <= 10) ? size : 1;
 
         //adjust gridplane to reflect the new grid size
