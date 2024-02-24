@@ -56,6 +56,11 @@ public class Player : MonoBehaviour
                 Grid.AddWall(hitInfo.point);
         }
 
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Grid.CreateMaze();
+        }
+
         // Traverse
         if(CurrentPathIndex < SmoothPath.Length)
         {

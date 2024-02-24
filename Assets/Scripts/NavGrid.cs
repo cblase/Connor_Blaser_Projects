@@ -364,55 +364,106 @@ public class NavGrid : MonoBehaviour
             }
         }
     }
+
+    public void CreateMaze()
+    {
+        int nextChunkRow = 2;
+        for (int i = 0; i < Grid.GetLength(0); i++)
+        {
+            for (int j = 0; j < Grid.GetLength(1); j++)
+            {
+                float chance = Random.Range(1, 11);
+                //top/bottom edges
+                if (i == 0 || i == Grid.GetLength(0) - 1)
+                {
+                    AddWall(ToWorldSpace(i, j));
+                }
+                //side edges
+                else if (j == 0 || j == Grid.GetLength(1) - 1)
+                {
+                    AddWall(ToWorldSpace(i, j));
+                }
+                //inner cells from outer walls stay empty
+                else if (i == 1 || i == Grid.GetLength(0) - 2)
+                {
+                    continue;
+                }
+                else if (j == 1 || j == Grid.GetLength(1) - 2)
+                {
+                    continue;
+                }
+
+                else if (i == nextChunkRow)
+                {
+                    if (i < Grid.GetLength(0) - 4 && j < Grid.GetLength(1) - 4)// 2< i < rowlength - 2, 2 < j < columnlength - 2
+                    {
+                        CreateWallChunk(i, j);
+                        if (j + 3 < Grid.GetLength(1) - 2)
+                        {
+                             j += 2;
+                        }
+                        else if(i + 3 < Grid.GetLength(0) - 2)
+                        {
+                             nextChunkRow += 3;
+                            j = Grid.GetLength(1) - 2;
+                        }
+                    }
+                    else
+                    {
+                        nextChunkRow += 3;
+                        j = Grid.GetLength(1) - 2;
+                    }
+                }
+            }
+        }
+    }
+
+    private void CreateWallChunk(int x, int y)
+    {
+        //List<NavGridPathNode> block = new List<NavGridPathNode>();
+        NavGridPathNode TL = Grid[x, y + 2];
+        NavGridPathNode TM = Grid[x + 1, y + 2];
+        NavGridPathNode TR = Grid[x + 2, y + 2];
+        NavGridPathNode L = Grid[x, y + 1];
+        NavGridPathNode M = Grid[x + 1, y + 1];
+        NavGridPathNode R = Grid[x+2, y + 1];
+        NavGridPathNode BL = Grid[x, y];
+        NavGridPathNode BM = Grid[x + 1, y];
+        NavGridPathNode BR = Grid[x + 2, y];
+
+        int randChunk = Random.Range(1, 7);
+        switch (randChunk)
+        {
+            case 1://horizontal line in middle
+                AddWall(L.Position);
+                AddWall(M.Position);
+                AddWall(R.Position);
+                break;
+            case 2: //vertical line in middle
+                AddWall(TM.Position);
+                AddWall(M.Position);
+                AddWall(BM.Position);
+                break;
+            case 3://Top-Right L
+                AddWall(TM.Position);
+                AddWall(M.Position);
+                AddWall(R.Position);
+                break;
+            case 4://Top-left L
+                AddWall(TM.Position);
+                AddWall(M.Position);
+                AddWall(L.Position);
+                break;
+            case 5://bottom - right L
+                AddWall(BM.Position);
+                AddWall(M.Position);
+                AddWall(R.Position);
+                break;
+            case 6://bottom - left L
+                AddWall(BM.Position);
+                AddWall(M.Position);
+                AddWall(L.Position);
+                break;
+        }
+    }
 }
-
-
-
-
-
-
-
-
-//spare code (quadratic smooth paths
-//if (nodeIndex + 3 == A_Path.Length - 1)
-//{
-//    A = A_Path[nodeIndex].Position + offSet;
-//    B = A_Path[nodeIndex + 1].Position + offSet;
-//    C = A_Path[nodeIndex + 2].Position + offSet;
-//    D = A_Path[nodeIndex + 3].Position + offSet;
-
-//    //check for straight lines to skip
-//    //if (checkForStraightLines(A, B, C) && checkForStraightLines(B, C, D))
-//    //{
-//    //    node = A;
-//    //    points.Add(node);
-//    //    nodeIndex++;
-//    //    break;
-//    //}
-//    node = CalculateCubicBezierPoint(t, A, B, C, D);
-//    points.Add(node);
-//    nodeIndex++;
-//}
-////check for enough nodes for a Quadratic curve
-//else if (nodeIndex + 2 < A_Path.Length)
-//{
-//    A = A_Path[nodeIndex].Position + offSet;
-//    B = A_Path[nodeIndex + 1].Position + offSet;
-//    C = A_Path[nodeIndex + 2].Position + offSet;
-//    if (checkForStraightLines(A, B, C))
-//    {
-//        node = A;
-//        points.Add(node);
-//        nodeIndex--;
-//        break;
-//    }
-//    node = CalculateQuadraticBezierPoint(t, A, B, C);
-//    points.Add(node);
-//}
-//else//only two nodes left
-//{
-//    points.Add(A_Path[nodeIndex].Position + offSet);
-//    points.Add(A_Path[nodeIndex + 1].Position + offSet);
-//    nodeIndex--;
-//    break;
-//}
