@@ -10,3 +10,5 @@ This project is aimed at creating a grid generator that mimics a basic form of a
 
 ## Final Notes
 This project is at about 90-95% where I want it. The path smoothing handles almost all path scenarios, however certain complex paths with multiple back to back turns sometimes showcases this path smoothing function's limitations. I'm researching more dynamic ways to handle these specific scenarios. I have some other optimizations I'd like to make in the future as well which I'm happy to share while reviewing the project.
+
+**Update 1: Added a Pacman-like maze wall generation function that will randomly generate walls throughout the grid. Assigned the action to the Spacebar.
